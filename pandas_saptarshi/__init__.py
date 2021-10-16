@@ -1,5 +1,6 @@
 from typing import Type
 import numpy as np
+from numpy.lib.arraysetops import isin
 
 __version__ = '0.0.1'
 
@@ -52,6 +53,15 @@ class DataFrame:
 
 
     def _convert_unicode_to_object(self, data):
+        """
+        s = ['cat', 'dog', 'snake'] --> it is a type of <U5(unicode where max len is 5)
+
+        if we do s[0] = 'elephant' it will be
+
+        s = ['eleph', 'dog', 'snake']---> coz max size is 5
+
+        so it's better to handle them by converting the Unicode data types to object data types
+        """
         new_data = {}
         for key,value in data.items():
             if value.dtype.kind == 'U':
@@ -68,7 +78,8 @@ class DataFrame:
         -------
         int: the number of rows in the dataframe
         """
-        pass
+        for value in self._data.values():
+            return len(value)
 
     @property
     def columns(self):
@@ -81,7 +92,7 @@ class DataFrame:
         -------
         list of column names
         """
-        pass
+        return list(self._data)
 
     @columns.setter
     def columns(self, columns):
@@ -97,7 +108,16 @@ class DataFrame:
         -------
         None
         """
-        pass
+        if not isinstance(columns, list):
+            raise TypeError('`columns` must be a list')
+        if len(columns)!= len(self._data):
+            raise ValueError('Number of columns must be same')
+        for col in columns:
+            if not isinstance(col, str):
+                raise TypeError(' All `columns` must be string')
+        if len(columns) != len(set(columns)):
+            raise ValueError('Duplicates in `column` name is not allowed')
+        self._data = dict(zip(columns, self._data.values()))
 
     @property
     def shape(self):
@@ -106,7 +126,7 @@ class DataFrame:
         -------
         two-item tuple of number of rows and columns
         """
-        pass
+        return len(self), len(self._data)
 
     def _repr_html_(self):
         """
@@ -149,7 +169,7 @@ class DataFrame:
         -------
         A single 2D NumPy array of the underlying data
         """
-        pass
+        return np.column_stack(list(self._data.values()))
 
     @property
     def dtypes(self):
@@ -160,7 +180,13 @@ class DataFrame:
         their data type in the other
         """
         DTYPE_NAME = {'O': 'string', 'i': 'int', 'f': 'float', 'b': 'bool'}
-        pass
+        col_name = np.array(list(self._data.keys()))
+        dtypes = [ DTYPE_NAME[val.dtype.kind] for val in self._data.values()]
+        dtypes = np.array(dtypes)
+        df = {'Column Name': col_name, 'Data Type': dtypes}
+        return DataFrame(df)
+            
+
 
     def __getitem__(self, item):
         """
