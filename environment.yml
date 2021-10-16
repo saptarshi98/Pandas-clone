@@ -1,0 +1,6 @@
+name: pandas_saptarshi
+dependencies:
+- python=3.6
+- pandas
+- jupyter
+- pytest
